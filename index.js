@@ -36,6 +36,18 @@ const exportHeaders = (filename) => {
   );
 };
 
+const splitICTFile = (filename) => {
+  const file = fs.readFileSync(filename);
+  let content = file.toString();
+  content = content.substr(content.lastIndexOf('Time_Start,'));
+  fs.writeFile(filename.replace('.ict', '.csv'), content.toLowerCase(),
+    (error) => {
+      if (error) throw error;
+      console.log(`${filename.replace('.ict', '.csv')} created successfully.`);
+    }
+  );
+};
+
 const getPropertiesFromCSV = (data, extraProperties={}, columnsStats=[]) => {
   const properties = {...extraProperties};
   const csvContent = dsv.dsvFormat(',').parse(data, (r) => r);
@@ -58,7 +70,7 @@ const makeGeoJSON = (filename, extraProperties={}, columnsStats=[]) => {
     content,
     { latfield: 'latitude', lonfield: 'longitude', delimiter: ',' },
     (err, data) => geojson = data
-    );
+  );
   geojson = csv2geojson.toLine(geojson);
   geojson.features[0].properties = getPropertiesFromCSV(content, extraProperties, columnsStats);
   return geojson;
@@ -82,4 +94,5 @@ module.exports = {
   getHeaders,
   exportHeaders,
   findHeaderFile,
+  splitICTFile,
 };

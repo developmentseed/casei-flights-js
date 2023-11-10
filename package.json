@@ -11,7 +11,8 @@
     "convert_all": "node convertAll.js",
     "headers": "node exportHeaders.js",
     "make_csv": "bash make_csv.sh",
-    "process": "bash process.sh"
+    "process": "bash process.sh",
+    "split_ict": "node splitIctFiles.js"
   },
   "dependencies": {
     "@mapbox/geojson-merge": "^1.1.1",

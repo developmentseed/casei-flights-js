@@ -1,4 +1,6 @@
-const convertToGeoJSON = require('./index').convertToGeoJSON;
+const fs = require('fs');
+
+const { convertToGeoJSON } = require('./index');
 
 const properties = {};
 const filename = process.argv[2];
@@ -10,9 +12,12 @@ if (process.argv[3]) {
 }
 
 const geojson = convertToGeoJSON(filename, properties)
-const geoJsonFilename = filename.replace('.csv', '.geojson');
-  fs.writeFileSync(
-    geoJsonFilename,
-    JSON.stringify(geojson)
-    );
-  console.log(`Converted ${filename} to ${geoJsonFilename}.`);
+const geoJsonFilename = filename.endsWith('.csv')
+  ? filename.replace('.csv', '.geojson')
+  : filename.replace('.ict', '.geojson');
+
+fs.writeFileSync(
+  geoJsonFilename,
+  JSON.stringify(geojson)
+);
+console.log(`Converted ${filename} to ${geoJsonFilename}.`);
