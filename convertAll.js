@@ -3,15 +3,18 @@ const path = require('path');
 const geojsonMerge = require('@mapbox/geojson-merge');
 const slugify = require('slugify');
 
-const { convertToGeoJSON } = require('./index');
+const { convertToGeoJSON, makeStaticLocationsGeoJSON } = require('./index');
 
 const dir = process.argv[2];
 const properties = {};
 if (process.argv[3]) {
-  properties.deployment = process.argv[3];
+  properties.campaign = process.argv[3];
 }
-if (process.argv[3]) {
-  properties.platform_name = process.argv[4];
+if (process.argv[4]) {
+  properties.deployment = process.argv[4];
+}
+if (process.argv[5]) {
+  properties.platform_name = process.argv[5];
 }
 
 const files = fs.readdirSync(dir);
@@ -23,7 +26,7 @@ const collection = files
 const mergedStream = geojsonMerge.merge(collection);
 const resultFile = path.join(
   dir,
-  slugify(`${process.argv[3]}-${process.argv[4]}.geojson`)
+  slugify(`${process.argv[4]}-${process.argv[5]}.geojson`)
 );
 
 fs.writeFile(

@@ -62,6 +62,18 @@ const getPropertiesFromCSV = (data, extraProperties={}, columnsStats=[]) => {
   return properties;
 };
 
+const makeStaticLocationsGeoJSON = (filename) => {
+  const file = fs.readFileSync(filename);
+  const content = file.toString();
+  let geojson;
+  csv2geojson.csv2geojson(
+    content,
+    { latfield: 'latitude', lonfield: 'longitude', delimiter: ',' },
+    (err, data) => geojson = data
+  );
+  return geojson;
+};
+
 const makeGeoJSON = (filename, extraProperties={}, columnsStats=[]) => {
   const file = fs.readFileSync(filename);
   const content = file.toString();
@@ -81,15 +93,21 @@ const convertToGeoJSON = (
   extraProperties={},
   columnsStats=['gps_altitude', 'pressure_altitude']
 ) => {
-  return simplify(
+  const geojson = simplify(
     makeGeoJSON(filename, extraProperties, columnsStats),
     0.001
   );
+  // some files have the same pair coordinates repeated in all rows, what generates
+  // an invalid LineString starting and ending in the same location, so we need to
+  // exclude those items from the final GeoJSON
+  geojson.features = geojson.features.filter((i) => i.geometry.coordinates.length > 2);
+  return geojson;
 };
 
 module.exports = {
   getPropertiesFromCSV,
   makeGeoJSON,
+  makeStaticLocationsGeoJSON,
   convertToGeoJSON,
   getHeaders,
   exportHeaders,
