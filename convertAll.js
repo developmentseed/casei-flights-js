@@ -6,16 +6,10 @@ const slugify = require('slugify');
 const { convertToGeoJSON, makeStaticLocationsGeoJSON } = require('./index');
 
 const dir = process.argv[2];
-const properties = {};
-if (process.argv[3]) {
-  properties.campaign = process.argv[3];
-}
-if (process.argv[4]) {
-  properties.deployment = process.argv[4];
-}
-if (process.argv[5]) {
-  properties.platform_name = process.argv[5];
-}
+const platform_name = path.basename(dir);
+const deployment = path.basename(path.dirname(dir));
+const campaign = path.basename(path.dirname(path.dirname(dir)));
+const properties = { platform_name, deployment, campaign };
 
 const files = fs.readdirSync(dir);
 const collection = files
@@ -26,7 +20,7 @@ const collection = files
 const mergedStream = geojsonMerge.merge(collection);
 const resultFile = path.join(
   dir,
-  slugify(`${process.argv[4]}-${process.argv[5]}.geojson`)
+  slugify(`${deployment}-${platform_name}.geojson`)
 );
 
 fs.writeFile(

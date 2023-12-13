@@ -2,4 +2,4 @@
 
 yarn headers "$1"
 bash make_csv.sh "$1"
-yarn convert_all "$1" "$2" "$3" "$4"
+yarn convert_all "$1"
