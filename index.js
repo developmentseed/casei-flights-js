@@ -39,7 +39,12 @@ const exportHeaders = (filename) => {
 const splitICTFile = (filename) => {
   const file = fs.readFileSync(filename);
   let content = file.toString();
-  content = content.substr(content.lastIndexOf('Time_Start,'));
+  if (content.indexOf('Time_Start') !== -1) {
+    content = content.substr(content.lastIndexOf('Time_Start,'));
+  }
+  if (content.indexOf('Time_mid') !== -1) {
+    content = content.substr(content.lastIndexOf('Time_mid,'));
+  }
   fs.writeFile(filename.replace('.ict', '.csv'), content.toLowerCase(),
     (error) => {
       if (error) throw error;
@@ -82,6 +87,10 @@ const makeGeoJSON = (filename, extraProperties={}, columnsStats=[]) => {
     content,
     { latfield: 'latitude', lonfield: 'longitude', delimiter: ',' },
     (err, data) => geojson = data
+  );
+  geojson.features = geojson.features.filter((i) =>
+    i.geometry.coordinates[0] >= -180 && i.geometry.coordinates[1] >= -90 &&
+    i.geometry.coordinates[0] <= 180 && i.geometry.coordinates[1] <= 90
   );
   geojson = csv2geojson.toLine(geojson);
   geojson.features[0].properties = getPropertiesFromCSV(content, extraProperties, columnsStats);
