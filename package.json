@@ -1,7 +1,7 @@
 {
   "name": "casei-flights-js",
   "version": "1.0.0",
-  "description": "Convert flights data from CMR txt files to simplified GeoJSON",
+  "description": "Convert flights data from CMR txt/icartt files to simplified GeoJSON",
   "main": "index.js",
   "author": "Development Seed",
   "license": "MIT",
@@ -12,6 +12,7 @@
     "headers": "node exportHeaders.js",
     "make_csv": "bash make_csv.sh",
     "process": "bash process.sh",
+    "process_all": "bash processAll.sh",
     "split_ict": "node splitIctFiles.js"
   },
   "dependencies": {
