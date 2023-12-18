@@ -11,6 +11,7 @@
     "convert_all": "node convertAll.js",
     "headers": "node exportHeaders.js",
     "make_csv": "bash make_csv.sh",
+    "merge": "node merge.js",
     "process": "bash process.sh",
     "process_all": "bash processAll.sh",
     "split_ict": "node splitIctFiles.js"

@@ -1,24 +1,14 @@
 const fs = require('fs');
 
-const { convertToGeoJSON, makeStaticLocationsGeoJSON } = require('./index');
+const { convertToGeoJSON, makeStaticLocationsGeoJSON, getPropertiesFromPath } = require('./index');
 
 let geojson;
-const properties = {};
 const filename = process.argv[2];
-
-if (process.argv[3]) {
-  properties.campaign = process.argv[3];
-}
-if (process.argv[4]) {
-  properties.deployment = process.argv[4];
-}
-if (process.argv[5]) {
-  properties.platform_name = process.argv[5];
-}
 
 if (filename.endsWith('static.csv')) {
   geojson = makeStaticLocationsGeoJSON(filename);
 } else {
+  const properties = getPropertiesFromPath(path.basename(filename));
   geojson = convertToGeoJSON(filename, properties);
 }
 

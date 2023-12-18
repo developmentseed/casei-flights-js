@@ -6,6 +6,7 @@ const dsv = require('d3-dsv');
 const csv2geojson = require('csv2geojson');
 const simplify = require('simplify-geojson');
 const { XMLParser } = require('fast-xml-parser');
+const geojsonMerge = require('@mapbox/geojson-merge');
 
 const { getStats } = require('./stats.js');
 
@@ -34,6 +35,13 @@ const exportHeaders = (filename) => {
       console.log(`headers file ${headers_file} created successfully.`);
     }
   );
+};
+
+const getPropertiesFromPath = (dir) => {
+  const platform_name = path.basename(dir);
+  const deployment = path.basename(path.dirname(dir));
+  const campaign = path.basename(path.dirname(path.dirname(dir)));
+  return { platform_name, deployment, campaign };
 };
 
 const splitICTFile = (filename) => {
@@ -113,6 +121,19 @@ const convertToGeoJSON = (
   return geojson;
 };
 
+const mergeGeoJSONCollection = (collection, outputFilename) => {
+  const mergedStream = geojsonMerge.merge(collection);
+
+  fs.writeFile(
+    outputFilename,
+    JSON.stringify(mergedStream),
+    (error) => {
+      if (error) throw error;
+      console.log(`${outputFilename} created successfully.`);
+    }
+  );
+}
+
 module.exports = {
   getPropertiesFromCSV,
   makeGeoJSON,
@@ -122,4 +143,6 @@ module.exports = {
   exportHeaders,
   findHeaderFile,
   splitICTFile,
+  getPropertiesFromPath,
+  mergeGeoJSONCollection,
 };
