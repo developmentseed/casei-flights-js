@@ -1,6 +1,6 @@
 # casei-flights-js
 
-Process flights data files from NASA CMR portal and convert it to GeoJSON format. It supports both txt or icartt files.
+Process flights data files from NASA CMR portal and convert it to GeoJSON format. It supports both `txt` or `icartt` files.
 
 ## Installing
 
@@ -29,3 +29,11 @@ yarn process_all <DIR>
 ```
 
 In this case, the `<DIR>` is the campaign folder, which contains the deployments and platforms as subdirectories. It will generate a single geojson file, named as `<CAMPAIGN>.geojson`.
+
+### Convert a single file
+
+We can also convert a single `.ict` or `.txt` file with the following command:
+
+```
+yarn convert <FILE>
+```
