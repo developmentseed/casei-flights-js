@@ -1,13 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const geojsonMerge = require('@mapbox/geojson-merge');
 const slugify = require('slugify');
 
 const {
   convertToGeoJSON,
-  makeStaticLocationsGeoJSON,
   getPropertiesFromPath,
-  mergeGeoJSONCollection
+  mergeGeoJSONCollection,
 } = require('./index');
 
 const dir = process.argv[2];

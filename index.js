@@ -1,5 +1,3 @@
-'use strict';
-
 const fs = require('fs');
 const path = require('path');
 const dsv = require('d3-dsv');
@@ -7,16 +5,16 @@ const csv2geojson = require('csv2geojson');
 const simplify = require('simplify-geojson');
 const { XMLParser } = require('fast-xml-parser');
 const geojsonMerge = require('@mapbox/geojson-merge');
+const dist = require('@turf/distance');
 
-const { getStats } = require('./stats.js');
-
+const { getStats } = require('./stats');
 
 const getHeaders = (filename) => {
-  const parser = new XMLParser({ignoreAttributes : false, attributeNamePrefix: '$'});
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '$' });
   const file = fs.readFileSync(filename);
   const data = parser.parse(file.toString());
   const headers = data.config.parameter
-    .map( (i) => i['$id'] ? 'timestamp' : i['$xml:id'])
+    .map((i) => (i.$id ? 'timestamp' : i['$xml:id']))
     .map((i) => i.toLowerCase());
   return ['product', ...headers];
 };
@@ -24,24 +22,22 @@ const getHeaders = (filename) => {
 const findHeaderFile = (dir) => {
   const files = fs.readdirSync(dir);
   return files.filter((f) => f.endsWith('.xml'))[0]
-}
+};
 
 const exportHeaders = (filename) => {
   const headers = getHeaders(filename);
-  const headers_file = path.join(path.dirname(filename), 'headers.csv');
-  fs.writeFile(headers_file, headers.join(','),
-    (error) => {
-      if (error) throw error;
-      console.log(`headers file ${headers_file} created successfully.`);
-    }
-  );
+  const headersFile = path.join(path.dirname(filename), 'headers.csv');
+  fs.writeFile(headersFile, headers.join(','), (error) => {
+    if (error) throw error;
+    console.log(`headers file ${headersFile} created successfully.`);
+  });
 };
 
 const getPropertiesFromPath = (dir) => {
-  const platform_name = path.basename(dir);
+  const platformName = path.basename(dir);
   const deployment = path.basename(path.dirname(dir));
   const campaign = path.basename(path.dirname(path.dirname(dir)));
-  return { platform_name, deployment, campaign };
+  return { platformName, deployment, campaign };
 };
 
 const splitICTFile = (filename) => {
@@ -53,7 +49,12 @@ const splitICTFile = (filename) => {
   if (content.indexOf('Time_mid') !== -1) {
     content = content.substr(content.lastIndexOf('Time_mid,'));
   }
-  fs.writeFile(filename.replace('.ict', '.csv'), content.toLowerCase(),
+  // some files have Lat and Long as column headers
+  content = content.replace(',Lat,', ',latitude,');
+  content = content.replace(',Long,', ',longitude,');
+  fs.writeFile(
+    filename.replace('.ict', '.csv'),
+    content.toLowerCase(),
     (error) => {
       if (error) throw error;
       console.log(`${filename.replace('.ict', '.csv')} created successfully.`);
@@ -61,18 +62,36 @@ const splitICTFile = (filename) => {
   );
 };
 
-const getPropertiesFromCSV = (data, extraProperties={}, columnsStats=[]) => {
-  const properties = {...extraProperties};
+const getPropertiesFromCSV = (data, extraProperties = {}, columnsStats = []) => {
+  const properties = { ...extraProperties };
   const csvContent = dsv.dsvFormat(',').parse(data, (r) => r);
-  properties['product'] = csvContent[0].product;
-  properties['start'] = csvContent[0].timestamp;
-  properties['end'] = csvContent[csvContent.length - 1].timestamp;
-  columnsStats.forEach((p) =>
-    properties[p] = getStats(
-      csvContent.filter((i) => Number(i[p]) !== NaN).map((i) => Number(i[p]))
-    )
+  properties.product = csvContent[0].product;
+  properties.start = csvContent[0].timestamp;
+  properties.end = csvContent[csvContent.length - 1].timestamp;
+  columnsStats.forEach(
+    (p) => {
+      properties[p] = getStats(
+        csvContent.filter((i) => Number(i[p]) !== NaN).map((i) => Number(i[p]))
+      );
+    }
   );
   return properties;
+};
+
+const cleanCoords = (coords, maxDistance) => {
+  let lastValidCoord;
+  return coords.filter(
+    (c, i) => {
+      if (i > 0) {
+        // maxDistance unit is kilometers
+        const isValid = dist.default(c, lastValidCoord) < maxDistance;
+        if (isValid) lastValidCoord = c;
+        return isValid;
+      }
+      lastValidCoord = c;
+      return true;
+    }
+  );
 };
 
 const makeStaticLocationsGeoJSON = (filename) => {
@@ -87,7 +106,7 @@ const makeStaticLocationsGeoJSON = (filename) => {
   return geojson;
 };
 
-const makeGeoJSON = (filename, extraProperties={}, columnsStats=[]) => {
+const makeGeoJSON = (filename, extraProperties = {}, columnsStats = []) => {
   const file = fs.readFileSync(filename);
   const content = file.toString();
   let geojson;
@@ -96,10 +115,10 @@ const makeGeoJSON = (filename, extraProperties={}, columnsStats=[]) => {
     { latfield: 'latitude', lonfield: 'longitude', delimiter: ',' },
     (err, data) => geojson = data
   );
-  geojson.features = geojson.features.filter((i) =>
-    i.geometry.coordinates[0] >= -180 && i.geometry.coordinates[1] >= -90 &&
-    i.geometry.coordinates[0] <= 180 && i.geometry.coordinates[1] <= 90
-  );
+  geojson.features = geojson.features.filter((i) => (
+    i.geometry.coordinates[0] >= -180 && i.geometry.coordinates[1] >= -90
+    && i.geometry.coordinates[0] <= 180 && i.geometry.coordinates[1] <= 90
+  ));
   geojson = csv2geojson.toLine(geojson);
   geojson.features[0].properties = getPropertiesFromCSV(content, extraProperties, columnsStats);
   return geojson;
@@ -107,8 +126,8 @@ const makeGeoJSON = (filename, extraProperties={}, columnsStats=[]) => {
 
 const convertToGeoJSON = (
   filename,
-  extraProperties={},
-  columnsStats=['gps_altitude', 'pressure_altitude']
+  extraProperties = {},
+  columnsStats = ['gps_altitude', 'pressure_altitude']
 ) => {
   const geojson = simplify(
     makeGeoJSON(filename, extraProperties, columnsStats),
@@ -132,7 +151,7 @@ const mergeGeoJSONCollection = (collection, outputFilename) => {
       console.log(`${outputFilename} created successfully.`);
     }
   );
-}
+};
 
 module.exports = {
   getPropertiesFromCSV,
@@ -145,4 +164,5 @@ module.exports = {
   splitICTFile,
   getPropertiesFromPath,
   mergeGeoJSONCollection,
+  cleanCoords,
 };
