@@ -9,6 +9,11 @@ const dist = require('@turf/distance');
 
 const { getStats } = require('./stats');
 
+/**
+* Read a XML file and get the headers information.
+* @param {String} filename - path to the XML file
+* @return {Array} headers array
+*/
 const getHeaders = (filename) => {
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '$' });
   const file = fs.readFileSync(filename);
@@ -19,20 +24,35 @@ const getHeaders = (filename) => {
   return ['product', ...headers];
 };
 
+/**
+* Inspect a platform data directory and find the header file.
+* @param {String} dir - Directory containing the platform data
+* @return {String} header filename
+*/
 const findHeaderFile = (dir) => {
   const files = fs.readdirSync(dir);
-  return files.filter((f) => f.endsWith('.xml'))[0]
+  return files.filter((f) => f.endsWith('.xml'))[0];
 };
 
-const exportHeaders = (filename) => {
-  const headers = getHeaders(filename);
-  const headersFile = path.join(path.dirname(filename), 'headers.csv');
+/**
+* Reads a XML file and export the headers to a new CSV file.
+* @param {String} filePath - XML file path
+*/
+const exportHeaders = (filePath) => {
+  const headers = getHeaders(filePath);
+  const headersFile = path.join(path.dirname(filePath), 'headers.csv');
   fs.writeFile(headersFile, headers.join(','), (error) => {
     if (error) throw error;
     console.log(`headers file ${headersFile} created successfully.`);
   });
 };
 
+/**
+* Read a directory structure and return the properties metadata that needs to be added to a GeoJSON
+file.
+* @param {String} dir - Directory path
+* @return {Object} platformName, deployment and campaign information
+*/
 const getPropertiesFromPath = (dir) => {
   const platformName = path.basename(dir);
   const deployment = path.basename(path.dirname(dir));
@@ -40,6 +60,10 @@ const getPropertiesFromPath = (dir) => {
   return { platformName, deployment, campaign };
 };
 
+/**
+* Reads an ICT file and creates a CSV file, containing only the relevant data.
+* @param {String} filePath - XML file path
+*/
 const splitICTFile = (filename) => {
   const file = fs.readFileSync(filename);
   let content = file.toString();
@@ -62,6 +86,18 @@ const splitICTFile = (filename) => {
   );
 };
 
+/**
+* Reads a CSV file and returns an object with the properties that needs to be added to the
+GeoJSON feature. The metadata can be composed of some predefined metadata, and stats calculated
+from the CSV lines.
+* @summary Reads a CSV file and returns an object with the properties that needs to be added to the
+GeoJSON feature.
+* @param {String} data - CSV content
+* @param {Object} extraProperties - predefined properties
+* @param {Array} columnsStats - an array containing the columns that will have the stats computed.
+Stats include the average, minimum and maximum values.
+* @return {Object} properties object
+*/
 const getPropertiesFromCSV = (data, extraProperties = {}, columnsStats = []) => {
   const properties = { ...extraProperties };
   const csvContent = dsv.dsvFormat(',').parse(data, (r) => r);
@@ -78,6 +114,13 @@ const getPropertiesFromCSV = (data, extraProperties = {}, columnsStats = []) => 
   return properties;
 };
 
+/**
+* Iterates over an array of coordinates and remove the ones that are further away than X
+kilometers from the previous valid coordinate.
+* @param {Array} coords - geojson coordinates array
+* @param {Number} maxDistance - maximum distance from the previous coordinate
+* @return {Array} coordinates that pass the maximum distance check
+*/
 const cleanCoords = (coords, maxDistance) => {
   let lastValidCoord;
   return coords.filter(
@@ -94,8 +137,13 @@ const cleanCoords = (coords, maxDistance) => {
   );
 };
 
-const makeStaticLocationsGeoJSON = (filename) => {
-  const file = fs.readFileSync(filename);
+/**
+* Reads a CSV file containing a set of static locations and returns the data in GeoJSON format.
+* @param {String} filePath - path to a comma delimited CSV file
+* @return {Object} resulting GeoJSON object
+*/
+const makeStaticLocationsGeoJSON = (filePath) => {
+  const file = fs.readFileSync(filePath);
   const content = file.toString();
   let geojson;
   csv2geojson.csv2geojson(
@@ -106,8 +154,16 @@ const makeStaticLocationsGeoJSON = (filename) => {
   return geojson;
 };
 
-const makeGeoJSON = (filename, extraProperties = {}, columnsStats = []) => {
-  const file = fs.readFileSync(filename);
+/**
+* Reads a CSV file containing flight data and returns the data in GeoJSON format.
+* @param {String} filePath - path to a comma delimited CSV file
+* @param {Object} extraProperties - predefined properties
+* @param {Array} columnsStats - an array containing the columns that will have the stats computed.
+Stats include the average, minimum and maximum values.
+* @return {Object} resulting GeoJSON object
+*/
+const makeGeoJSON = (filePath, extraProperties = {}, columnsStats = []) => {
+  const file = fs.readFileSync(filePath);
   const content = file.toString();
   let geojson;
   csv2geojson.csv2geojson(
@@ -124,13 +180,22 @@ const makeGeoJSON = (filename, extraProperties = {}, columnsStats = []) => {
   return geojson;
 };
 
+/**
+* Reads a CSV file containing flight data and returns the data in GeoJSON format,
+with the geometries simplified and filtering out the invalid LineStrings.
+* @param {String} filePath - path to a comma delimited CSV file
+* @param {Object} extraProperties - predefined properties
+* @param {Array} columnsStats - an array containing the columns that will have the stats computed.
+Stats include the average, minimum and maximum values.
+* @return {Object} resulting GeoJSON object
+*/
 const convertToGeoJSON = (
-  filename,
+  filePath,
   extraProperties = {},
   columnsStats = ['gps_altitude', 'pressure_altitude']
 ) => {
   const geojson = simplify(
-    makeGeoJSON(filename, extraProperties, columnsStats),
+    makeGeoJSON(filePath, extraProperties, columnsStats),
     0.001
   );
   // some files have the same pair coordinates repeated in all rows, what generates
@@ -140,6 +205,11 @@ const convertToGeoJSON = (
   return geojson;
 };
 
+/**
+* Merge in a single file a GeoJSON feature collection.
+* @param {Array} collection - collection of GeoJSON features
+* @param {String} outputFilename - name of the output file
+*/
 const mergeGeoJSONCollection = (collection, outputFilename) => {
   const mergedStream = geojsonMerge.merge(collection);
 
