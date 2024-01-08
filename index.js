@@ -117,8 +117,9 @@ const getPropertiesFromCSV = (data, extraProperties = {}, columnsStats = []) => 
 /**
 * Iterates over an array of coordinates and remove the ones that are further away than X
 kilometers from the previous valid coordinate.
-* @param {Array} coords - geojson coordinates array
-* @param {Number} maxDistance - maximum distance from the previous coordinate
+* @param {Array} coords - geojson feature coordinates array
+* @param {Number} maxDistance - maximum acceptable distance from the previous coordinate in
+kilometers
 * @return {Array} coordinates that pass the maximum distance check
 */
 const cleanCoords = (coords, maxDistance) => {
@@ -160,9 +161,11 @@ const makeStaticLocationsGeoJSON = (filePath) => {
 * @param {Object} extraProperties - predefined properties
 * @param {Array} columnsStats - an array containing the columns that will have the stats computed.
 Stats include the average, minimum and maximum values.
+* @param {Boolean} fixCoords - if true, coordinates that seems to be wrong will be removed.
+See cleanCoords function.
 * @return {Object} resulting GeoJSON object
 */
-const makeGeoJSON = (filePath, extraProperties = {}, columnsStats = []) => {
+const makeGeoJSON = (filePath, extraProperties = {}, columnsStats = [], fixCoords = true) => {
   const file = fs.readFileSync(filePath);
   const content = file.toString();
   let geojson;
@@ -176,6 +179,10 @@ const makeGeoJSON = (filePath, extraProperties = {}, columnsStats = []) => {
     && i.geometry.coordinates[0] <= 180 && i.geometry.coordinates[1] <= 90
   ));
   geojson = csv2geojson.toLine(geojson);
+  if (fixCoords) {
+    const newCoords = cleanCoords(geojson.features[0].geometry.coordinates, 300);
+    geojson.features[0].geometry.coordinates = newCoords;
+  }
   geojson.features[0].properties = getPropertiesFromCSV(content, extraProperties, columnsStats);
   return geojson;
 };

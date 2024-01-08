@@ -19,7 +19,7 @@ const collection = files
 
 const resultFile = path.join(
   dir,
-  slugify(`${properties.deployment}-${properties.platform_name}.geojson`)
+  slugify(`${properties.deployment}-${properties.platformName}.geojson`)
 );
 
 mergeGeoJSONCollection(collection, resultFile);
