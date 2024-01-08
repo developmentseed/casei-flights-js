@@ -6,14 +6,14 @@ describe('getPropertiesFromPath', () => {
       {
         campaign: 'campaign',
         deployment: 'deployment',
-        platformName: 'platform',
+        platform_name: 'platform',
       }
     );
     expect(getPropertiesFromPath('/root/subdir/campaign/deployment/platform/')).toEqual(
       {
         campaign: 'campaign',
         deployment: 'deployment',
-        platformName: 'platform',
+        platform_name: 'platform',
       }
     );
   });

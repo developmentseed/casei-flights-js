@@ -52,13 +52,13 @@ const exportHeaders = (filePath) => {
 * Read a directory structure and return the properties metadata that needs to be added to a GeoJSON
 file.
 * @param {String} dir - Directory path
-* @return {Object} platformName, deployment and campaign information
+* @return {Object} platform_name, deployment and campaign information
 */
 const getPropertiesFromPath = (dir) => {
   const platformName = path.basename(dir);
   const deployment = path.basename(path.dirname(dir));
   const campaign = path.basename(path.dirname(path.dirname(dir)));
-  return { platformName, deployment, campaign };
+  return { platform_name: platformName, deployment, campaign };
 };
 
 /**
