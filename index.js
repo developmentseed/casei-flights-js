@@ -6,6 +6,7 @@ const simplify = require('simplify-geojson');
 const { XMLParser } = require('fast-xml-parser');
 const geojsonMerge = require('@mapbox/geojson-merge');
 const dist = require('@turf/distance');
+const splitGeoJSON = require('geojson-antimeridian-cut');
 
 const { getStats } = require('./stats');
 
@@ -209,7 +210,8 @@ const convertToGeoJSON = (
   // an invalid LineString starting and ending in the same location, so we need to
   // exclude those items from the final GeoJSON
   geojson.features = geojson.features.filter((i) => i.geometry.coordinates.length > 2);
-  return geojson;
+  // split features if it crosses the antimeridian
+  return splitGeoJSON(geojson);
 };
 
 /**

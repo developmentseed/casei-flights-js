@@ -21,10 +21,10 @@
   "dependencies": {
     "@mapbox/geojson-merge": "^1.1.1",
     "@turf/distance": "^6.5.0",
-    "@turf/meta": "^6.5.0",
     "csv2geojson": "^5.1.2",
     "d3-dsv": "1.0.1",
     "fast-xml-parser": "^4.3.2",
+    "geojson-antimeridian-cut": "^0.1.0",
     "meow": "^12.1.1",
     "simplify-geojson": "^1.0.5",
     "slugify": "^1.6.6",
