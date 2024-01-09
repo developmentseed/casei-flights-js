@@ -1,9 +1,12 @@
 #!/bin/bash
 
+OIFS="$IFS"
+# necessary to avoid problems when the directory or filename has a space
+IFS=$'\n'
 # Process each platform
 for i in `find $1 -type d  -mindepth 2`;
 do
-    yarn process $i;
+    yarn process "$i";
 done;
 
 # Convert static location file to geojson
@@ -25,3 +28,5 @@ if test -s $DIR/$CAMPAIGN_GEOJSON;
 fi;
 
 yarn merge $DIR $CAMPAIGN_GEOJSON
+
+IFS="$OIFS"

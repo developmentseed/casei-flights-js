@@ -1,13 +1,20 @@
 #!/bin/bash
 
-headers_file=$1/headers.csv
-for f in `ls $1/*.txt`;
+OIFS="$IFS"
+# necessary to avoid problems when the directory or filename has a space
+IFS=$'\n'
+
+headers_file="$1/headers.csv"
+
+for f in `find "$1" -type f -name "*.txt"`;
 do
-    new_name=${f%.txt}.csv;
+    new_name="${f%.txt}".csv;
     cat $headers_file $f > $new_name;
 done
 
-for f in `ls $1/*.ict`;
+for f in `find "$1" -type f -name "*.ict"`;
 do
-    yarn split_ict $f;
+    yarn split_ict "$f";
 done
+
+IFS="$OIFS"
