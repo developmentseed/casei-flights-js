@@ -68,17 +68,25 @@ const getPropertiesFromPath = (dir) => {
 const splitICTFile = (filename) => {
   const file = fs.readFileSync(filename);
   let content = file.toString();
+  let columnNotFound = true;
 
   // ICART files can have different column names for the start time
-  ['Time_Start,', 'Time_mid,', 'Start_UTC,'].forEach((col) => {
-    if (content.indexOf(col) !== -1) {
+  ['Time_Start,', 'Time_mid,', 'Start_UTC,', 'TIME_NP,', 'UTC,'].forEach((col) => {
+    if (content.indexOf(col) !== -1 && columnNotFound) {
       content = content.substr(content.lastIndexOf(col));
+      columnNotFound = false;
     }
   });
 
-  // some files have Lat and Long as column headers
-  content = content.replace(',Lat,', ',latitude,');
-  content = content.replace(',Long,', ',longitude,');
+  // some files have different column names for latitude and longitude
+  content = content
+    .replace(',Lat,', ',latitude,')
+    .replace(',Long,', ',longitude,')
+    .replace(',GGLAT,', ',latitude,')
+    .replace(',GGLON,', ',longitude,')
+    .replace(', GPS_LAT_NP,', ',latitude,')
+    .replace(', GPS_LON_NP,', ',longitude,');
+
   fs.writeFile(
     filename.replace('.ict', '.csv'),
     content.toLowerCase(),
