@@ -68,12 +68,14 @@ const getPropertiesFromPath = (dir) => {
 const splitICTFile = (filename) => {
   const file = fs.readFileSync(filename);
   let content = file.toString();
-  if (content.indexOf('Time_Start') !== -1) {
-    content = content.substr(content.lastIndexOf('Time_Start,'));
-  }
-  if (content.indexOf('Time_mid') !== -1) {
-    content = content.substr(content.lastIndexOf('Time_mid,'));
-  }
+
+  // ICART files can have different column names for the start time
+  ['Time_Start,', 'Time_mid,', 'Start_UTC,'].forEach((col) => {
+    if (content.indexOf(col) !== -1) {
+      content = content.substr(content.lastIndexOf(col));
+    }
+  });
+
   // some files have Lat and Long as column headers
   content = content.replace(',Lat,', ',latitude,');
   content = content.replace(',Long,', ',longitude,');
